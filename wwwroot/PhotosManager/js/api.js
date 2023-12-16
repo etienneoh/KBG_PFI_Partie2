@@ -3,7 +3,8 @@
 
 ////////////////////////////////////////////// API photos_APIs call ///////////////////////////////////////////////////////
 
-const serverHost = "http://localhost:5000";
+//const serverHost = "http://localhost:5000";
+const serverHost = "https://stream-island-sailboat.glitch.me"
 const photos_API = "/api/photos";
 const photoLikes_API = "/api/photolikes";
 class API {

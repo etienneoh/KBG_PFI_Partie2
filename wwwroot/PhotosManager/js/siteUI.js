@@ -105,8 +105,28 @@ function loggedUserMenu() {
 }
 function viewMenu(viewName) {
     if (viewName == "photosList") {
-        // todo
-        return "";
+        return `<div class="dropdown-divider"></div>
+        <span class="dropdown-item" id="sortByDateCmd">
+        <i class="menuIcon fa fa-check mx-2"></i>
+        <i class="menuIcon fa fa-calendar mx-2"></i>
+        Photos par date de création
+        </span>
+        <span class="dropdown-item" id="sortByOwnersCmd">
+        <i class="menuIcon fa fa-fw mx-2"></i>
+        <i class="menuIcon fa fa-users mx-2"></i>
+        Photos par créateur
+        </span>
+        <span class="dropdown-item" id="sortByLikesCmd">
+        <i class="menuIcon fa fa-fw mx-2"></i>
+        <i class="menuIcon fa fa-user mx-2"></i>
+        Photos les plus aiméés
+        </span>
+        <span class="dropdown-item" id="ownerOnlyCmd">
+        <i class="menuIcon fa fa-fw mx-2"></i>
+        <i class="menuIcon fa fa-user mx-2"></i>
+        Mes photos
+        </span>
+        `;
     }
     else
         return "";
@@ -353,6 +373,7 @@ async function renderPhotos() {
     }
 }
 async function renderPhotosList() {
+    // todo
     eraseContent();
     $("#content").append("<h2> En contruction </h2>");
 }
