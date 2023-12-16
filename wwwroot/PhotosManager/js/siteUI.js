@@ -1,6 +1,6 @@
 //<span class="cmdIcon fa-solid fa-ellipsis-vertical"></span>
 let contentScrollPosition = 0;
-let sortType = "date";
+let sortType = "date"; //owners,likes,ownerOnly
 let keywords = "";
 let loginMessage = "";
 let Email = "";
@@ -71,6 +71,7 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
+    $('newPhotoCmd').on("click",renderNewPhoto);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
@@ -104,25 +105,26 @@ function loggedUserMenu() {
             </span>`;
 }
 function viewMenu(viewName) {
+    // todo
     if (viewName == "photosList") {
         return `<div class="dropdown-divider"></div>
         <span class="dropdown-item" id="sortByDateCmd">
-        <i class="menuIcon fa fa-check mx-2"></i>
+        ${sortType =="date" ? `<i class="menuIcon fa fa-check mx-2"></i>`:""}
         <i class="menuIcon fa fa-calendar mx-2"></i>
         Photos par date de création
         </span>
         <span class="dropdown-item" id="sortByOwnersCmd">
-        <i class="menuIcon fa fa-fw mx-2"></i>
+        ${sortType =="owners" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-users mx-2"></i>
         Photos par créateur
         </span>
         <span class="dropdown-item" id="sortByLikesCmd">
-        <i class="menuIcon fa fa-fw mx-2"></i>
+        ${sortType =="likes" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-user mx-2"></i>
         Photos les plus aiméés
         </span>
         <span class="dropdown-item" id="ownerOnlyCmd">
-        <i class="menuIcon fa fa-fw mx-2"></i>
+        ${sortType =="ownerOnly" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-user mx-2"></i>
         Mes photos
         </span>
@@ -367,15 +369,80 @@ async function renderPhotos() {
     $("#abort").hide();
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser)
-        renderPhotosList();
-    else {
+    renderPhotosList();
+else {
+    renderLoginForm();
+}
+}
+async function renderNewPhoto(){
+    // todo
+    timeout();
+    showWaitingGif();
+    if (!API.retrieveLoggedUser()) {
         renderLoginForm();
-    }
+    } 
+    eraseContent();
+    UpdateHeader("Ajout de photos", "addPhoto");
+    $("#newPhotoCmd").hide();
+    $("#content").append(`
+        <form class="form" id="addPhotoForm"'>
+            <fieldset>
+                <legend>Informations</legend>
+                <input  type="text" 
+                        class="form-control Alpha" 
+                        name="Title" 
+                        id="Title"
+                        placeholder="Titre" 
+                        required 
+                        RequireMessage = 'Veuillez entrer un titre'
+                        InvalidMessage = 'Titre invalide'/>
+                <textarea class="form-control Alpha"
+                          name="Description"
+                          id="Description"
+                          placeholder="Description"
+                          required
+                          RequireMessage = 'Veuillez entrer une description'
+                          InvalidMessage = 'Description invalide'/></textarea>
+                          <br/>
+                <input type="checkbox"
+                        id="Shared"
+                       name="Shared">
+                <label for="Shared">Partagée</label>
+            </fieldset>
+            <fieldset>
+                <legend>Image</legend>
+                <div class='imageUploader' 
+                        newImage='true' 
+                        controlId='Image' 
+                        imageSrc='images/no-avatar.png'
+                        waitingImage="images/Loading_icon.gif">
+            </div>
+            </fieldset>
+   
+            <input type='submit' name='submit' id='addPhoto' value="Publier" class="form-control btn-primary">
+        </form>
+        <div class="cancel">
+            <button class="form-control btn-secondary" id="abortAddPhotoCmd">Annuler</button>
+        </div>
+    `);
+    initFormValidation();
+    initImageUploaders();
+    $('#abortAddPhotoCmd').on('click', renderPhotos);
+    $('#addPhotoForm').on("submit", function (event) {
+        let formData = getFormData($('#addPhotoForm'));
+        event.preventDefault();
+        showWaitingGif();
+        console.log(formData);
+        //API.CreatePhoto(formData);
+    });
+
 }
 async function renderPhotosList() {
     // todo
+    showWaitingGif();
     eraseContent();
-    $("#content").append("<h2> En contruction </h2>");
+    let photos = API.GetPhotos();
+    $("#content").append(`${photos}`);
 }
 function renderVerify() {
     eraseContent();
