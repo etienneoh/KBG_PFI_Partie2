@@ -71,7 +71,7 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
-    $('newPhotoCmd').on("click",renderNewPhoto);
+    $('#newPhotoCmd').on("click",renderNewPhoto);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
@@ -378,9 +378,6 @@ async function renderNewPhoto(){
     // todo
     timeout();
     showWaitingGif();
-    if (!API.retrieveLoggedUser()) {
-        renderLoginForm();
-    } 
     eraseContent();
     UpdateHeader("Ajout de photos", "addPhoto");
     $("#newPhotoCmd").hide();
@@ -414,7 +411,7 @@ async function renderNewPhoto(){
                 <div class='imageUploader' 
                         newImage='true' 
                         controlId='Image' 
-                        imageSrc='images/no-avatar.png'
+                        imageSrc='images/PhotoCloudLogo.png'
                         waitingImage="images/Loading_icon.gif">
             </div>
             </fieldset>
@@ -433,7 +430,10 @@ async function renderNewPhoto(){
         event.preventDefault();
         showWaitingGif();
         console.log(formData);
-        //API.CreatePhoto(formData);
+        formData.append("Date",Date.now());
+        formData.append("OwnerId",API.retrieveLoggedUser().Id);
+        formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
+        API.CreatePhoto(formData);
     });
 
 }
@@ -441,7 +441,7 @@ async function renderPhotosList() {
     // todo
     showWaitingGif();
     eraseContent();
-    let photos = API.GetPhotos();
+    let photos = await API.GetPhotos();
     $("#content").append(`${photos}`);
 }
 function renderVerify() {
