@@ -376,7 +376,6 @@ async function renderPhotos() {
     }
 }
 async function renderNewPhoto() {
-    // todo
     timeout();
     showWaitingGif();
     eraseContent();
@@ -445,7 +444,6 @@ async function renderNewPhoto() {
 
 }
 async function renderPhotosList() {
-    // todo
     showWaitingGif();
     UpdateHeader('Liste des photos', 'photosList');
     $('#newPhotoCmd').show();
@@ -491,7 +489,6 @@ async function renderPhotosList() {
     }else{
         renderLoginForm();
     }
-    //$("#content").append(`${photos}`);
 }
 async function renderDetailPhoto(Id){
     timeout();
@@ -501,12 +498,14 @@ async function renderDetailPhoto(Id){
     let loggedUser = API.retrieveLoggedUser();
     if(loggedUser){
         eraseContent();
+        showWaitingGif();
         let photo = await API.GetPhotosById(Id);
         let uploader = await API.GetAccount(photo.OwnerId);
+        eraseContent();
         $("#content").append(`
         <div class="photoDetailsOwner">
-            <div class="UserAvatarSmall" style="background-image:url('${uploader.Avatar}')" title="${uploader.Name}"></div>
-            <h3>${uploader.Name}</h3>
+            <div class="UserAvatarSmall" style="background-image:url('${uploader.data.Avatar}')" title="${uploader.data.Name}"></div>
+            <h3>${uploader.data.Name}</h3>
         </div>
         <hr>
         <div class="photoDetailsTitle">${photo.Title}</div>
