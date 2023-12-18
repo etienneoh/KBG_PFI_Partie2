@@ -460,7 +460,6 @@ async function renderPhotosList() {
         eraseContent();
         let photos = await API.GetPhotos();
         //let likes = await API.GetPhotoLikes();
-        let users = await API.GetAccounts();
         $("#content").append(`<div class="photosLayout" id="layoutParent"> `);
         switch (sortType) {
             case "date":
@@ -486,7 +485,6 @@ async function renderPhotosList() {
         }
         photos.data.forEach(photo => {
             let isOwner = photo.OwnerId == loggedUser.Id;
-            let owner = users.data.find((element) => element.Id == photo.OwnerId);
             if ((isOwner || photo.Shared) || loggedUser.isAdmin) { // Si l<utilisateur a le droit de la voir
                 $('#layoutParent').append(`
                 <div class="photoLayoutNoScrollSnap">
@@ -497,7 +495,7 @@ async function renderPhotosList() {
                             <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>` : ""}
                     </div>
                     <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
-                    <div class="UserAvatarSmall" style="background-image:url('${owner.Avatar}')" photoId="${photo.Id}"></div>
+                    <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')" photoId="${photo.Id}"></div>
                     ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>` : ""}
                     </div>
                     <div class="photoCreationDate">
@@ -531,12 +529,11 @@ async function renderDetailPhoto(Id) {
         eraseContent();
         showWaitingGif();
         let photo = await API.GetPhotosById(Id);
-        let uploader = await API.GetAccount(photo.OwnerId);
         eraseContent();
         $("#content").append(`
         <div class="photoDetailsOwner">
-            <div class="UserAvatarSmall" style="background-image:url('${uploader.data.Avatar}')" title="${uploader.data.Name}"></div>
-            <h3>${uploader.data.Name}</h3>
+            <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')" title="${photo.Owner.Name}"></div>
+            <h3>${photo.Owner.Name}</h3>
         </div>
         <hr>
         <div class="photoDetailsTitle">${photo.Title}</div>
