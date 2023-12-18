@@ -491,10 +491,10 @@ async function renderPhotosList() {
                     <div class="photoTitleContainer">
                         <span class="photoTitle">${photo.Title}</span>
                         ${isOwner || loggedUser.isAdmin ?
-                        `<div><span class="fas fa-trash cmdIconSmall"  id="deletePhotoCmd" title="supprimer" photoId="${photo.Id}"></span></div>
-                            <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>` : ""}
+                        `<div><span class="fas fa-trash cmdIconSmall deletePhotoCmd" title="supprimer" photoId="${photo.Id}"></span></div>
+                            <div><span class="fas fa-pencil-alt cmdIconSmall editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>` : ""}
                     </div>
-                    <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
+                    <div class="photoImage detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
                     <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')" photoId="${photo.Id}"></div>
                     ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>` : ""}
                     </div>
@@ -503,15 +503,15 @@ async function renderPhotosList() {
             }
         })
         $("#content").append(`</div>`); // Fermeture de #layoutParent
-        $("#detailPhotoCmd").on("click", function () {
+        $(".detailPhotoCmd").on("click", function () {
             let photoId = $(this).attr("photoId");
             renderDetailPhoto(photoId);
         });
-        $("#editPhotoCmd").on("click", function () {
+        $(".editPhotoCmd").on("click", function () {
             let photoId = $(this).attr("photoId");
             renderEditPhoto(photoId);
         });
-        $("#deletePhotoCmd").on("click", function () {
+        $(".deletePhotoCmd").on("click", function () {
             let photoId = $(this).attr("photoId");
             renderConfirmDeletePhoto(photoId);
         });
