@@ -477,7 +477,7 @@ async function renderPhotosList() {
                 });
                 break;
             case "ownerOnly":
-                photos.data.filter((a) => a.OwnerId == loggedUser.ownerId);
+                photos.data = photos.data.filter((a) => a.OwnerId == loggedUser.Id);
                 break;
             default:
                 photos.data.sort((a, b) => a.Date - b.Date);
