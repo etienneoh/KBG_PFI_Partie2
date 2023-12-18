@@ -429,11 +429,17 @@ async function renderNewPhoto(){
         let formData = getFormData($('#addPhotoForm'));
         event.preventDefault();
         showWaitingGif();
-        console.log(formData);
-        formData.append("Date",Date.now());
-        formData.append("OwnerId",API.retrieveLoggedUser().Id);
+        formData.Date = Date.now();
+        formData.OwnerId = API.retrieveLoggedUser().Id;
         formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
-        API.CreatePhoto(formData);
+        console.log(formData);
+        API.CreatePhoto(formData).then((resolve)=>{
+            if(resolve){
+                console.log("sucess");
+            }else{
+                console.log(resolve);
+            }
+        });
     });
 
 }
