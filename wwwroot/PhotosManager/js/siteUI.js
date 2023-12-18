@@ -529,6 +529,7 @@ async function renderEditPhoto(Id){
     $('#newPhotoCmd').hide();
     let loggedUser = API.retrieveLoggedUser();
     let photo = await API.GetPhotosById(Id);
+    eraseContent();
     if(loggedUser){
         if(loggedUser.Id != photo.OwnerId){
             renderError("Vous ne pouvez pas modifier cette photo");
@@ -545,7 +546,7 @@ async function renderEditPhoto(Id){
                         required 
                         RequireMessage = 'Veuillez entrer un titre'
                         InvalidMessage = 'Titre invalide'
-                        value="${photo.Title}/>
+                        value="${photo.Title}"/>
                 <textarea class="form-control Alpha"
                           name="Description"
                           id="Description"
@@ -584,11 +585,56 @@ async function renderEditPhoto(Id){
         let formData = getFormData($('#editPhotoForm'));
         event.preventDefault();
         showWaitingGif();
+        formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
         API.UpdatePhoto(formData).then((resolve) => {
             if (resolve) {
                 renderPhotosList();
             } else {
                 renderError("Une erreur s'est produite lors de la modification de votre image.");
+            }
+        });
+    });
+    }else{
+        renderLoginForm();
+    }
+}
+async function renderConfirmDeletePhoto(Id){
+    timeout();
+    showWaitingGif();
+    UpdateHeader('Supprimer cette photo', 'photosList');
+    $('#newPhotoCmd').hide();
+    let loggedUser = API.retrieveLoggedUser();
+    let photo = await API.GetPhotosById(Id);
+    eraseContent();
+    if(loggedUser){
+        if(loggedUser.Id != photo.OwnerId){
+            renderError("Vous ne pouvez pas modifier cette photo");
+        }
+        $("#content").append(`
+            <div class="content deletePhotoForm">
+                <div class="form">
+                 <h2> Voulez-vous vraiment supprimer cette photo? </h2>
+                 <br>
+                 <h4>${photo.Title}</h4>
+                 <br>
+                 <img src="${photo.Image}" alt="${photo.Description}" width="${photoContainerWidth}" height="${photoContainerHeight}">
+                    <button class="form-control btn-danger" id="deletePhotoCmd">Supprimer</button>
+                    <br>
+                    <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
+                </div>
+            </div>
+        `);
+    initFormValidation();
+    initImageUploaders();
+    $('#abortCmd').on('click', renderPhotos);
+    $('#deletePhotoCmd').on("submit", function (event) {
+        event.preventDefault();
+        showWaitingGif();
+        API.deletePhoto(photo.Id).then((resolve) => {
+            if (resolve) {
+                renderPhotosList();
+            } else {
+                renderError("Une erreur s'est produite lors de la suppresion de votre image.");
             }
         });
     });
