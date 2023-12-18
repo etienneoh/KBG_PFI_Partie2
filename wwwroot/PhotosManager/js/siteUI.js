@@ -458,7 +458,7 @@ async function renderPhotosList() {
         $("#content").append(`<div class="photosLayout" id="layoutParent"> `);
         photos.data.forEach(photo =>{
             let isOwner = photo.OwnerId == loggedUser.Id;
-            let uploader = API.GetAccount(photo.OwnerId);
+            let owner = users.data.find((element)=> element.Id == photo.OwnerId);
             if(isOwner || photo.Shared){ // Si l<utilisateur a le droit de la voir
                 $('#layoutParent').append(`
                 <div class="photoLayoutNoScrollSnap">
@@ -469,7 +469,7 @@ async function renderPhotosList() {
                             <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>`:``}
                     </div>
                     <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
-                    <div class="UserAvatarSmall" style="background-image:url('${uploader.Avatar}')" photoId="${photo.Id}></div>
+                    <div class="UserAvatarSmall" style="background-image:url('${owner.Avatar}')" photoId="${photo.Id}></div>
                     ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>`:``}</div>
                     <div class="photoCreationDate">
                         <span>${convertToFrenchDate(photo.Date)}</span>`);     
@@ -501,8 +501,8 @@ async function renderDetailPhoto(Id){
     let loggedUser = API.retrieveLoggedUser();
     if(loggedUser){
         eraseContent();
-        let photo = API.GetPhotosById(Id);
-        let uploader = API.GetAccount(photo.OwnerId);
+        let photo = await API.GetPhotosById(Id);
+        let uploader = await API.GetAccount(photo.OwnerId);
         $("#content").append(`
         <div class="photoDetailsOwner">
             <div class="UserAvatarSmall" style="background-image:url('${uploader.Avatar}')" title="${uploader.Name}"></div>
