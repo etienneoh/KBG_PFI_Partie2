@@ -1,7 +1,7 @@
 
 //<span class="cmdIcon fa-solid fa-ellipsis-vertical"></span>
 let contentScrollPosition = 0;
-let sortType = "date"; //owners,likes,ownerOnly
+let sortType = "date"; //owners,ownerOnly
 let keywords = "";
 let loginMessage = "";
 let Email = "";
@@ -73,6 +73,20 @@ function attachCmd() {
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
     $('#newPhotoCmd').on("click", renderNewPhoto);
+    //date,owners,ownerOnly
+    //sortByDateCmd,sortByOwnersCmd,ownerOnlyCmd
+    $('#sortByDateCmd').on("click", () => {
+        sortType = "date";
+        renderPhotos();
+    })
+    $('#sortByOwnersCmd').on("click", () => {
+        sortType = "owners";
+        renderPhotos();
+    })
+    $('#ownerOnlyCmd').on("click", () => {
+        sortType = "ownerOnly";
+        renderPhotos();
+    })
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
@@ -106,7 +120,6 @@ function loggedUserMenu() {
             </span>`;
 }
 function viewMenu(viewName) {
-    // todo
     if (viewName == "photosList") {
         return `<div class="dropdown-divider"></div>
         <span class="dropdown-item" id="sortByDateCmd">
@@ -118,11 +131,6 @@ function viewMenu(viewName) {
         ${sortType == "owners" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-users mx-2"></i>
         Photos par créateur
-        </span>
-        <span class="dropdown-item" id="sortByLikesCmd">
-        ${sortType == "likes" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
-        <i class="menuIcon fa fa-user mx-2"></i>
-        Photos les plus aiméés
         </span>
         <span class="dropdown-item" id="ownerOnlyCmd">
         ${sortType == "ownerOnly" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
@@ -448,29 +456,52 @@ async function renderPhotosList() {
     UpdateHeader('Liste des photos', 'photosList');
     $('#newPhotoCmd').show();
     let loggedUser = API.retrieveLoggedUser();
-    if(loggedUser){
+    if (loggedUser) {
         eraseContent();
         let photos = await API.GetPhotos();
         //let likes = await API.GetPhotoLikes();
         let users = await API.GetAccounts();
         $("#content").append(`<div class="photosLayout" id="layoutParent"> `);
-        photos.data.forEach(photo =>{
+        switch (sortType) {
+            case "date":
+                photos.data.sort((a, b) => a.Date - b.Date);
+                break;
+            case "owners":
+                photos.data.sort((a, b) => {
+                    if (a.OwnerId < b.OwnerId) {
+                        return -1;
+                    }
+                    if (a.OwnerId > b.OwnerId) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                break;
+            case "ownerOnly":
+                photos.data.filter((a) => a.OwnerId == loggedUser.ownerId);
+                break;
+            default:
+                photos.data.sort((a, b) => a.Date - b.Date);
+                break;
+        }
+        photos.data.forEach(photo => {
             let isOwner = photo.OwnerId == loggedUser.Id;
-            let owner = users.data.find((element)=> element.Id == photo.OwnerId);
-            if(isOwner || photo.Shared){ // Si l<utilisateur a le droit de la voir
+            let owner = users.data.find((element) => element.Id == photo.OwnerId);
+            if ((isOwner || photo.Shared) || loggedUser.isAdmin) { // Si l<utilisateur a le droit de la voir
                 $('#layoutParent').append(`
                 <div class="photoLayoutNoScrollSnap">
                     <div class="photoTitleContainer">
                         <span class="photoTitle">${photo.Title}</span>
-                        ${ isOwner ? 
-                            `<div><span class="fas fa-trash cmdIconSmall"  id="deletePhotoCmd" title="supprimer" photoId="${photo.Id}"></span></div>
-                            <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>`:``}
+                        ${isOwner || loggedUser.isAdmin ?
+                        `<div><span class="fas fa-trash cmdIconSmall"  id="deletePhotoCmd" title="supprimer" photoId="${photo.Id}"></span></div>
+                            <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>` : ""}
                     </div>
                     <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
-                    <div class="UserAvatarSmall" style="background-image:url('${owner.Avatar}')" photoId="${photo.Id}></div>
-                    ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>`:``}</div>
+                    <div class="UserAvatarSmall" style="background-image:url('${owner.Avatar}')" photoId="${photo.Id}"></div>
+                    ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>` : ""}
+                    </div>
                     <div class="photoCreationDate">
-                        <span>${convertToFrenchDate(photo.Date)}</span>`);     
+                        <span>${convertToFrenchDate(photo.Date)}</span> </div>`);
             }
         })
         $("#content").append(`</div>`); // Fermeture de #layoutParent
@@ -478,7 +509,7 @@ async function renderPhotosList() {
             let photoId = $(this).attr("photoId");
             renderDetailPhoto(photoId);
         });
-        $("#editPhotoCmd").on("click",  function () {
+        $("#editPhotoCmd").on("click", function () {
             let photoId = $(this).attr("photoId");
             renderEditPhoto(photoId);
         });
@@ -486,17 +517,17 @@ async function renderPhotosList() {
             let photoId = $(this).attr("photoId");
             renderConfirmDeletePhoto(photoId);
         });
-    }else{
+    } else {
         renderLoginForm();
     }
 }
-async function renderDetailPhoto(Id){
+async function renderDetailPhoto(Id) {
     timeout();
     showWaitingGif();
     UpdateHeader('Détails', 'photosList');
     $('#newPhotoCmd').hide();
     let loggedUser = API.retrieveLoggedUser();
-    if(loggedUser){
+    if (loggedUser) {
         eraseContent();
         showWaitingGif();
         let photo = await API.GetPhotosById(Id);
@@ -517,12 +548,12 @@ async function renderDetailPhoto(Id){
             ${photo.Description}
         </p>
         `);
-    }else{
+    } else {
         renderLoginForm();
     }
 }
 
-async function renderEditPhoto(Id){
+async function renderEditPhoto(Id) {
     timeout();
     showWaitingGif();
     UpdateHeader('Modifier une photo', 'photosList');
@@ -530,8 +561,8 @@ async function renderEditPhoto(Id){
     let loggedUser = API.retrieveLoggedUser();
     let photo = await API.GetPhotosById(Id);
     eraseContent();
-    if(loggedUser){
-        if(loggedUser.Id != photo.OwnerId){
+    if (loggedUser) {
+        if ((loggedUser.Id != photo.OwnerId) && !loggedUser.isAdmin) {
             renderError("Vous ne pouvez pas modifier cette photo");
         }
         $("#content").append(`
@@ -557,7 +588,7 @@ async function renderEditPhoto(Id){
                           <br/>
                 <input type="checkbox"
                         id="Shared"
-                       name="Shared" ${photo.Shared ? "checked":""}>
+                       name="Shared" ${photo.Shared ? "checked" : ""}>
                 <label for="Shared">Partagée</label>
             </fieldset>
             <fieldset>
@@ -578,27 +609,27 @@ async function renderEditPhoto(Id){
             <button class="form-control btn-secondary" id="abortEditPhotoCmd">Annuler</button>
         </div>
     `);
-    initFormValidation();
-    initImageUploaders();
-    $('#abortEditPhotoCmd').on('click', renderPhotos);
-    $('#editPhotoForm').on("submit", function (event) {
-        let formData = getFormData($('#editPhotoForm'));
-        event.preventDefault();
-        showWaitingGif();
-        formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
-        API.UpdatePhoto(formData).then((resolve) => {
-            if (resolve) {
-                renderPhotosList();
-            } else {
-                renderError("Une erreur s'est produite lors de la modification de votre image.");
-            }
+        initFormValidation();
+        initImageUploaders();
+        $('#abortEditPhotoCmd').on('click', renderPhotos);
+        $('#editPhotoForm').on("submit", function (event) {
+            let formData = getFormData($('#editPhotoForm'));
+            event.preventDefault();
+            showWaitingGif();
+            formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
+            API.UpdatePhoto(formData).then((resolve) => {
+                if (resolve) {
+                    renderPhotosList();
+                } else {
+                    renderError("Une erreur s'est produite lors de la modification de votre image.");
+                }
+            });
         });
-    });
-    }else{
+    } else {
         renderLoginForm();
     }
 }
-async function renderConfirmDeletePhoto(Id){
+async function renderConfirmDeletePhoto(Id) {
     timeout();
     showWaitingGif();
     UpdateHeader('Supprimer cette photo', 'photosList');
@@ -606,39 +637,39 @@ async function renderConfirmDeletePhoto(Id){
     let loggedUser = API.retrieveLoggedUser();
     let photo = await API.GetPhotosById(Id);
     eraseContent();
-    if(loggedUser){
-        if(loggedUser.Id != photo.OwnerId){
+    if (loggedUser) {
+        if (loggedUser.Id != photo.OwnerId) {
             renderError("Vous ne pouvez pas modifier cette photo");
         }
         $("#content").append(`
-            <div class="content deletePhotoForm">
+            <div class="content" id="deletePhotoForm">
                 <div class="form">
                  <h2> Voulez-vous vraiment supprimer cette photo? </h2>
                  <br>
                  <h4>${photo.Title}</h4>
                  <br>
-                 <img src="${photo.Image}" alt="${photo.Description}" width="${photoContainerWidth}" height="${photoContainerHeight}">
-                    <button class="form-control btn-danger" id="deletePhotoCmd">Supprimer</button>
+                 <img class="photoDetailsLargeImage" src="${photo.Image}" alt="${photo.Description}"></img>
+
+                 <input type='submit' name='submit' id='deletePhoto' value="Supprimer" class="form-control btn-danger">
                     <br>
                     <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
                 </div>
             </div>
         `);
-    initFormValidation();
-    initImageUploaders();
-    $('#abortCmd').on('click', renderPhotos);
-    $('#deletePhotoCmd').on("submit", function (event) {
-        event.preventDefault();
-        showWaitingGif();
-        API.deletePhoto(photo.Id).then((resolve) => {
-            if (resolve) {
-                renderPhotosList();
-            } else {
-                renderError("Une erreur s'est produite lors de la suppresion de votre image.");
-            }
+        initFormValidation();
+        initImageUploaders();
+        $('#abortCmd').on('click', renderPhotos);
+        $('#deletePhoto').on("click", () => {
+            showWaitingGif();
+            API.DeletePhoto(photo.Id).then((resolve) => {
+                if (resolve) {
+                    renderPhotosList();
+                } else {
+                    renderError("Une erreur s'est produite lors de la suppresion de votre image.");
+                }
+            });
         });
-    });
-    }else{
+    } else {
         renderLoginForm();
     }
 }
