@@ -1,4 +1,3 @@
-import queryString from "query-string";
 
 //<span class="cmdIcon fa-solid fa-ellipsis-vertical"></span>
 let contentScrollPosition = 0;
@@ -451,7 +450,7 @@ async function renderPhotosList() {
     let loggedUser = API.retrieveLoggedUser();
     if(loggedUser){
         eraseContent();
-        let photos = await API.GetPhotos(queryString);
+        let photos = await API.GetPhotos();
         //let likes = await API.GetPhotoLikes();
         let users = await API.GetAccounts();
         $("#content").append(`<div class="photosLayout" id="layoutParent"> `);
