@@ -480,7 +480,7 @@ async function renderPhotosList() {
         });
         $("#editPhotoCmd").on("click",  function () {
             let photoId = $(this).attr("photoId");
-            renderEditPhotoForm(photoId);
+            renderEditPhoto(photoId);
         });
         $("#deletePhotoCmd").on("click", function () {
             let photoId = $(this).attr("photoId");
@@ -517,6 +517,81 @@ async function renderDetailPhoto(Id){
             ${photo.Description}
         </p>
         `);
+    }else{
+        renderLoginForm();
+    }
+}
+
+async function renderEditPhoto(Id){
+    timeout();
+    showWaitingGif();
+    UpdateHeader('Modifier une photo', 'photosList');
+    $('#newPhotoCmd').hide();
+    let loggedUser = API.retrieveLoggedUser();
+    let photo = await API.GetPhotosById(Id);
+    if(loggedUser){
+        if(loggedUser.Id != photo.OwnerId){
+            renderError("Vous ne pouvez pas modifier cette photo");
+        }
+        $("#content").append(`
+        <form class="form" id="editPhotoForm"'>
+            <fieldset>
+                <legend>Informations</legend>
+                <input  type="text" 
+                        class="form-control Alpha" 
+                        name="Title" 
+                        id="Title"
+                        placeholder="Titre" 
+                        required 
+                        RequireMessage = 'Veuillez entrer un titre'
+                        InvalidMessage = 'Titre invalide'
+                        value="${photo.Title}/>
+                <textarea class="form-control Alpha"
+                          name="Description"
+                          id="Description"
+                          placeholder="Description"
+                          required
+                          RequireMessage = 'Veuillez entrer une description'
+                          InvalidMessage = 'Description invalide'/>${photo.Description}</textarea>
+                          <br/>
+                <input type="checkbox"
+                        id="Shared"
+                       name="Shared" ${photo.Shared ? "checked":""}>
+                <label for="Shared">Partagée</label>
+            </fieldset>
+            <fieldset>
+                <legend>Image</legend>
+                <div class='imageUploader' 
+                        newImage='true' 
+                        controlId='Image' 
+                        imageSrc='${photo.Image}'
+                        waitingImage="images/Loading_icon.gif">
+            </div>
+            </fieldset>
+            <input type="hidden" name="Date" id="Date" value="${Date.now()}"/>
+            <input type="hidden" name="OwnerId" id="OwnerId" value="${loggedUser.Id}"/>
+            <input type="hidden" name="Id" id="Id" value="${photo.Id}"/>
+            <input type='submit' name='submit' id='editPhoto' value="Modifier" class="form-control btn-primary">
+        </form>
+        <div class="cancel">
+            <button class="form-control btn-secondary" id="abortEditPhotoCmd">Annuler</button>
+        </div>
+    `);
+    initFormValidation();
+    initImageUploaders();
+    $('#abortEditPhotoCmd').on('click', renderPhotos);
+    $('#editPhotoForm').on("submit", function (event) {
+        let formData = getFormData($('#editPhotoForm'));
+        event.preventDefault();
+        showWaitingGif();
+        API.UpdatePhoto(formData).then((resolve) => {
+            if (resolve) {
+                renderPhotosList();
+            } else {
+                renderError("Une erreur s'est produite lors de la modification de votre image.");
+            }
+        });
+    });
     }else{
         renderLoginForm();
     }
