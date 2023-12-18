@@ -1,3 +1,5 @@
+import queryString from "query-string";
+
 //<span class="cmdIcon fa-solid fa-ellipsis-vertical"></span>
 let contentScrollPosition = 0;
 let sortType = "date"; //owners,likes,ownerOnly
@@ -71,7 +73,7 @@ function attachCmd() {
     $('#renderManageUsersMenuCmd').on('click', renderManageUsers);
     $('#editProfilCmd').on('click', renderEditProfilForm);
     $('#aboutCmd').on("click", renderAbout);
-    $('#newPhotoCmd').on("click",renderNewPhoto);
+    $('#newPhotoCmd').on("click", renderNewPhoto);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Header management
@@ -109,22 +111,22 @@ function viewMenu(viewName) {
     if (viewName == "photosList") {
         return `<div class="dropdown-divider"></div>
         <span class="dropdown-item" id="sortByDateCmd">
-        ${sortType =="date" ? `<i class="menuIcon fa fa-check mx-2"></i>`:""}
+        ${sortType == "date" ? `<i class="menuIcon fa fa-check mx-2"></i>` : ""}
         <i class="menuIcon fa fa-calendar mx-2"></i>
         Photos par date de création
         </span>
         <span class="dropdown-item" id="sortByOwnersCmd">
-        ${sortType =="owners" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
+        ${sortType == "owners" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-users mx-2"></i>
         Photos par créateur
         </span>
         <span class="dropdown-item" id="sortByLikesCmd">
-        ${sortType =="likes" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
+        ${sortType == "likes" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-user mx-2"></i>
         Photos les plus aiméés
         </span>
         <span class="dropdown-item" id="ownerOnlyCmd">
-        ${sortType =="ownerOnly" ? `<i class="menuIcon fa fa-check mx-2"></i>`:`<i class="menuIcon fa fa-fw mx-2"></i>`}
+        ${sortType == "ownerOnly" ? `<i class="menuIcon fa fa-check mx-2"></i>` : `<i class="menuIcon fa fa-fw mx-2"></i>`}
         <i class="menuIcon fa fa-user mx-2"></i>
         Mes photos
         </span>
@@ -369,12 +371,12 @@ async function renderPhotos() {
     $("#abort").hide();
     let loggedUser = API.retrieveLoggedUser();
     if (loggedUser)
-    renderPhotosList();
-else {
-    renderLoginForm();
+        renderPhotosList();
+    else {
+        renderLoginForm();
+    }
 }
-}
-async function renderNewPhoto(){
+async function renderNewPhoto() {
     // todo
     timeout();
     showWaitingGif();
@@ -433,11 +435,11 @@ async function renderNewPhoto(){
         formData.OwnerId = API.retrieveLoggedUser().Id;
         formData.Shared == "on" ? formData.Shared = true : formData.Shared = false;
         console.log(formData);
-        API.CreatePhoto(formData).then((resolve)=>{
-            if(resolve){
-                console.log("sucess");
-            }else{
-                console.log(resolve);
+        API.CreatePhoto(formData).then((resolve) => {
+            if (resolve) {
+                renderPhotosList();
+            } else {
+                renderError("Une erreur s'est produite lors de l'ajout de votre image.");
             }
         });
     });
@@ -446,9 +448,48 @@ async function renderNewPhoto(){
 async function renderPhotosList() {
     // todo
     showWaitingGif();
-    eraseContent();
-    let photos = await API.GetPhotos();
-    $("#content").append(`${photos}`);
+    let loggedUser = API.retrieveLoggedUser();
+    if(loggedUser){
+        eraseContent();
+        let photos = await API.GetPhotos(queryString);
+        //let likes = await API.GetPhotoLikes();
+        let users = await API.GetAccounts();
+        $("#content").append(`<div class="photosLayout" id="layoutParent"> `);
+        photos.data.forEach(photo =>{
+            let isOwner = photo.OwnerId == loggedUser.Id;
+            if(isOwner || photo.Shared){ // Si l<utilisateur a le droit de la voir
+                $('#layoutParent').append(`
+                <div class="photoLayoutNoScrollSnap">
+                    <div class="photoTitleContainer">
+                        <span class="photoTitle">${photo.Title}</span>
+                        ${ isOwner ? 
+                            `<div><span class="fas fa-trash cmdIconSmall"  id="deletePhotoCmd" title="supprimer" photoId="${photo.Id}"></span></div>
+                            <div><span class="fas fa-pencil-alt cmdIconSmall" id="editPhotoCmd" inline-block;" title="modifier" photoId="${photo.Id}"></span> </div>`:``}
+                    </div>
+                    <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
+                    <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')"></div>
+                    ${photo.Shared ? `<div class="UserAvatarSmall sharePhotoCmd" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>`:``}</div>
+                    <div class="photoCreationDate">
+                        <span>${convertToFrenchDate(photo.Date)}</span>`);     
+            }
+        })
+        $("#content").append(`</div>`); // Fermeture de #layoutParent
+        $("#detailPhotoCmd").on("click", function () {
+            let photoId = $(this).attr("photoId");
+            renderDetailPhoto(photoId);
+        });
+        $("#editPhotoCmd").on("click",  function () {
+            let photoId = $(this).attr("photoId");
+            renderEditPhotoForm(photoId);
+        });
+        $("#deletePhotoCmd").on("click", function () {
+            let photoId = $(this).attr("photoId");
+            renderConfirmDeletePhoto(photoId);
+        });
+    }else{
+        renderLoginForm();
+    }
+    //$("#content").append(`${photos}`);
 }
 function renderVerify() {
     eraseContent();
