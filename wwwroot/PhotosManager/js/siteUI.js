@@ -447,6 +447,8 @@ async function renderNewPhoto() {
 async function renderPhotosList() {
     // todo
     showWaitingGif();
+    UpdateHeader('Liste des photos', 'photosList');
+    $('#newPhotoCmd').show();
     let loggedUser = API.retrieveLoggedUser();
     if(loggedUser){
         eraseContent();
@@ -467,7 +469,7 @@ async function renderPhotosList() {
                     </div>
                     <div class="photoImage" id="detailPhotoCmd" style="background-image:url('${photo.Image}')" photoId="${photo.Id}">
                     <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')"></div>
-                    ${photo.Shared ? `<div class="UserAvatarSmall sharePhotoCmd" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>`:``}</div>
+                    ${photo.Shared ? `<div class="UserAvatarSmall" style="background-image:url('../../PhotosManager/images/shared.png')" photoId="${photo.Id}"></div>`:``}</div>
                     <div class="photoCreationDate">
                         <span>${convertToFrenchDate(photo.Date)}</span>`);     
             }
@@ -489,6 +491,34 @@ async function renderPhotosList() {
         renderLoginForm();
     }
     //$("#content").append(`${photos}`);
+}
+async function renderDetailPhoto(Id){
+    timeout();
+    showWaitingGif();
+    UpdateHeader('Détails', 'photosList');
+    $('#newPhotoCmd').hide();
+    let loggedUser = API.retrieveLoggedUser();
+    if(loggedUser){
+        eraseContent();
+        let photo = API.GetPhotosById();
+        $("#content").append(`
+        <div class="photoDetailsOwner">
+            <div class="UserAvatarSmall" style="background-image:url('${photo.Owner.Avatar}')" title="${loggedUser.Name}"></div>
+            <h3>${photo.Owner.Name}</h3>
+        </div>
+        <hr>
+        <div class="photoDetailsTitle">${photo.Title}</div>
+        <img class="photoDetailsLargeImage" src="${photo.Image}" alt="${photo.Title}"></img>
+        <div class="photoDetailsCreationDate">
+            <span>${convertToFrenchDate(photo.Date)}</span>
+        </div>
+        <p class="photoDetailsDescription">
+            ${photo.Description}
+        </p>
+        `);
+    }else{
+        renderLoginForm();
+    }
 }
 function renderVerify() {
     eraseContent();
